@@ -63,7 +63,7 @@ import ru.tech.imageresizershrinker.core.ui.widget.buttons.ShareButton
 import ru.tech.imageresizershrinker.core.ui.widget.buttons.ZoomButton
 import ru.tech.imageresizershrinker.core.ui.widget.controls.ImageReorderCarousel
 import ru.tech.imageresizershrinker.core.ui.widget.controls.ScaleSmallImagesToLargeToggle
-import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.BackgroundColorSelector
+import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.ColorRowSelector
 import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.ImageFormatSelector
 import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.QualitySelector
 import ru.tech.imageresizershrinker.core.ui.widget.dialogs.ExitWithoutSavingDialog
@@ -122,7 +122,7 @@ fun ImageStitchingContent(
         }
     }
 
-    val pickImageLauncher =
+    val imagePicker =
         rememberImagePicker(
             mode = localImagePickerMode(Picker.Multiple)
         ) { list ->
@@ -131,7 +131,7 @@ fun ImageStitchingContent(
             }
         }
 
-    val addImagesLauncher =
+    val addImagesImagePicker =
         rememberImagePicker(
             mode = localImagePickerMode(Picker.Multiple)
         ) { list ->
@@ -141,10 +141,10 @@ fun ImageStitchingContent(
         }
 
     val addImages = {
-        addImagesLauncher.pickImage()
+        addImagesImagePicker.pickImage()
     }
 
-    val pickImage = pickImageLauncher::pickImage
+    val pickImage = imagePicker::pickImage
 
     AutoFilePicker(
         onAutoPick = pickImage,
@@ -299,7 +299,7 @@ fun ImageStitchingContent(
                         onValueChange = viewModel::setStitchAlignment
                     )
                 }
-                BackgroundColorSelector(
+                ColorRowSelector(
                     value = Color(viewModel.combiningParams.backgroundColor),
                     onValueChange = {
                         viewModel.updateBackgroundSelector(it.toArgb())

@@ -123,6 +123,7 @@ import ru.tech.imageresizershrinker.core.ui.widget.buttons.EnhancedIconButton
 import ru.tech.imageresizershrinker.core.ui.widget.buttons.PanModeButton
 import ru.tech.imageresizershrinker.core.ui.widget.buttons.ShareButton
 import ru.tech.imageresizershrinker.core.ui.widget.controls.SaveExifWidget
+import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.HelperGridParamsSelector
 import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.ImageFormatSelector
 import ru.tech.imageresizershrinker.core.ui.widget.dialogs.ExitWithoutSavingDialog
 import ru.tech.imageresizershrinker.core.ui.widget.dialogs.OneTimeSaveLocationSelectionDialog
@@ -139,6 +140,7 @@ import ru.tech.imageresizershrinker.core.ui.widget.other.LocalToastHostState
 import ru.tech.imageresizershrinker.core.ui.widget.other.TopAppBarEmoji
 import ru.tech.imageresizershrinker.core.ui.widget.other.showError
 import ru.tech.imageresizershrinker.core.ui.widget.preferences.PreferenceRowSwitch
+import ru.tech.imageresizershrinker.core.ui.widget.saver.PtSaver
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.ProcessImagesPreferenceSheet
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.SimpleSheetDefaults
 import ru.tech.imageresizershrinker.core.ui.widget.text.marquee
@@ -146,7 +148,6 @@ import ru.tech.imageresizershrinker.feature.draw.domain.DrawPathMode
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.BrushSoftnessSelector
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.DrawPathModeSelector
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.LineWidthSelector
-import ru.tech.imageresizershrinker.feature.draw.presentation.components.PtSaver
 import ru.tech.imageresizershrinker.feature.erase_background.presentation.components.AutoEraseBackgroundCard
 import ru.tech.imageresizershrinker.feature.erase_background.presentation.components.BitmapEraser
 import ru.tech.imageresizershrinker.feature.erase_background.presentation.components.OriginalImagePreviewAlphaSelector
@@ -161,7 +162,7 @@ fun EraseBackgroundContent(
     uriState: Uri?,
     onGoBack: () -> Unit,
     onNavigate: (Screen) -> Unit,
-    viewModel: EraseBackgroundViewModel = hiltViewModel()
+    viewModel: EraseBackgroundViewModel = hiltViewModel(),
 ) {
     val settingsState = LocalSettingsState.current
     val toastHostState = LocalToastHostState.current
@@ -198,7 +199,7 @@ fun EraseBackgroundContent(
     var showExitDialog by rememberSaveable { mutableStateOf(false) }
 
 
-    val pickImageLauncher =
+    val imagePicker =
         rememberImagePicker(
             mode = localImagePickerMode(Picker.Single)
         ) { uris ->
@@ -211,7 +212,7 @@ fun EraseBackgroundContent(
             }
         }
 
-    val pickImage = pickImageLauncher::pickImage
+    val pickImage = imagePicker::pickImage
 
     AutoFilePicker(
         onAutoPick = pickImage,
@@ -345,7 +346,8 @@ fun EraseBackgroundContent(
                     .fillMaxSize(),
                 panEnabled = panEnabled,
                 originalImagePreviewAlpha = originalImagePreviewAlpha,
-                drawPathMode = drawPathMode
+                drawPathMode = drawPathMode,
+                helperGridParams = viewModel.helperGridParams
             )
         }
     }
@@ -555,6 +557,11 @@ fun EraseBackgroundContent(
             TrimImageToggle(
                 checked = viewModel.trimImage,
                 onCheckedChange = { viewModel.setTrimImage(it) },
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
+            )
+            HelperGridParamsSelector(
+                value = viewModel.helperGridParams,
+                onValueChange = viewModel::updateHelperGridParams,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
             )
             val settingsInteractor = LocalSimpleSettingsInteractor.current

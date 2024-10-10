@@ -71,6 +71,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.tech.imageresizershrinker.core.domain.model.ColorModel
 import ru.tech.imageresizershrinker.core.resources.R
@@ -114,6 +115,7 @@ fun ColorSelectionRow(
     }
 
     LaunchedEffect(Unit) {
+        delay(250)
         if (value == customColor) {
             listState.scrollToItem(0)
         } else if (value in defaultColors) {
@@ -312,7 +314,7 @@ fun ColorSelectionRow(
                             }
                             LazyRow(
                                 state = rowState,
-                                modifier = modifier
+                                modifier = Modifier
                                     .fillMaxWidth()
                                     .fadingEdges(rowState),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),

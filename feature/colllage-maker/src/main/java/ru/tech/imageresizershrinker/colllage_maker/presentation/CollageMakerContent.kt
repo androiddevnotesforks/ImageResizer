@@ -106,10 +106,11 @@ import ru.tech.imageresizershrinker.core.ui.widget.buttons.BottomButtonsBlock
 import ru.tech.imageresizershrinker.core.ui.widget.buttons.EnhancedIconButton
 import ru.tech.imageresizershrinker.core.ui.widget.buttons.ShareButton
 import ru.tech.imageresizershrinker.core.ui.widget.controls.EnhancedSliderItem
-import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.BackgroundColorSelector
+import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.ColorRowSelector
 import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.ImageFormatSelector
 import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.QualitySelector
 import ru.tech.imageresizershrinker.core.ui.widget.dialogs.ExitWithoutSavingDialog
+import ru.tech.imageresizershrinker.core.ui.widget.dialogs.OneTimeImagePickingDialog
 import ru.tech.imageresizershrinker.core.ui.widget.dialogs.OneTimeSaveLocationSelectionDialog
 import ru.tech.imageresizershrinker.core.ui.widget.image.AspectRatioSelector
 import ru.tech.imageresizershrinker.core.ui.widget.image.AutoFilePicker
@@ -162,7 +163,7 @@ fun CollageMakerContent(
         }
     }
 
-    val pickImageLauncher = rememberImagePicker(
+    val imagePicker = rememberImagePicker(
         mode = localImagePickerMode(Picker.Multiple)
     ) { list ->
         list.takeIf { it.isNotEmpty() }?.let {
@@ -180,7 +181,7 @@ fun CollageMakerContent(
         }
     }
 
-    val pickImage = pickImageLauncher::pickImage
+    val pickImage = imagePicker::pickImage
 
     AutoFilePicker(
         onAutoPick = pickImage,
@@ -307,7 +308,7 @@ fun CollageMakerContent(
             )
         }
         Spacer(Modifier.height(8.dp))
-        BackgroundColorSelector(
+        ColorRowSelector(
             modifier = Modifier
                 .fillMaxWidth()
                 .container(
@@ -449,6 +450,9 @@ fun CollageMakerContent(
         var showFolderSelectionDialog by rememberSaveable {
             mutableStateOf(false)
         }
+        var showOneTimeImagePickingDialog by rememberSaveable {
+            mutableStateOf(false)
+        }
         BottomButtonsBlock(
             targetState = (viewModel.uris.isNullOrEmpty()) to isPortrait,
             onSecondaryButtonClick = pickImage,
@@ -460,6 +464,9 @@ fun CollageMakerContent(
             },
             actions = {
                 if (isPortrait) actions()
+            },
+            onSecondaryButtonLongClick = {
+                showOneTimeImagePickingDialog = true
             }
         )
         if (showFolderSelectionDialog) {
@@ -469,6 +476,12 @@ fun CollageMakerContent(
                 formatForFilenameSelection = viewModel.getFormatForFilenameSelection()
             )
         }
+        OneTimeImagePickingDialog(
+            onDismiss = { showOneTimeImagePickingDialog = false },
+            picker = Picker.Multiple,
+            imagePicker = imagePicker,
+            visible = showOneTimeImagePickingDialog
+        )
     }
 
     val noDataControls: @Composable () -> Unit = {

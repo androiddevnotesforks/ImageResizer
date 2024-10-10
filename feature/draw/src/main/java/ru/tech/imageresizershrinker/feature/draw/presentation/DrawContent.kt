@@ -147,7 +147,7 @@ import ru.tech.imageresizershrinker.core.ui.widget.buttons.PanModeButton
 import ru.tech.imageresizershrinker.core.ui.widget.buttons.ShareButton
 import ru.tech.imageresizershrinker.core.ui.widget.controls.SaveExifWidget
 import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.AlphaSelector
-import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.BackgroundColorSelector
+import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.ColorRowSelector
 import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.HelperGridParamsSelector
 import ru.tech.imageresizershrinker.core.ui.widget.controls.selection.ImageFormatSelector
 import ru.tech.imageresizershrinker.core.ui.widget.dialogs.ExitWithoutSavingDialog
@@ -164,6 +164,7 @@ import ru.tech.imageresizershrinker.core.ui.widget.other.showError
 import ru.tech.imageresizershrinker.core.ui.widget.preferences.PreferenceItem
 import ru.tech.imageresizershrinker.core.ui.widget.preferences.PreferenceRowSwitch
 import ru.tech.imageresizershrinker.core.ui.widget.saver.ColorSaver
+import ru.tech.imageresizershrinker.core.ui.widget.saver.PtSaver
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.ProcessImagesPreferenceSheet
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.SimpleSheet
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.SimpleSheetDefaults
@@ -183,7 +184,6 @@ import ru.tech.imageresizershrinker.feature.draw.presentation.components.DrawMod
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.DrawPathModeSelector
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.LineWidthSelector
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.OpenColorPickerCard
-import ru.tech.imageresizershrinker.feature.draw.presentation.components.PtSaver
 import ru.tech.imageresizershrinker.feature.draw.presentation.viewModel.DrawViewModel
 import ru.tech.imageresizershrinker.feature.pick_color.presentation.components.PickColorFromImageSheet
 
@@ -244,7 +244,7 @@ fun DrawContent(
         }
     }
 
-    val pickImageLauncher =
+    val imagePicker =
         rememberImagePicker(
             mode = localImagePickerMode(Picker.Single)
         ) { uris ->
@@ -258,7 +258,7 @@ fun DrawContent(
         }
 
     val pickImage = {
-        pickImageLauncher.pickImage()
+        imagePicker.pickImage()
     }
 
     val saveBitmap: (oneTimeSaveLocationUri: String?) -> Unit = {
@@ -355,8 +355,8 @@ fun DrawContent(
                 exit = fadeOut() + shrinkVertically()
             ) {
                 DrawColorSelector(
-                    drawColor = drawColor,
-                    onColorChange = { drawColor = it },
+                    value = drawColor,
+                    onValueChange = { drawColor = it },
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
@@ -389,7 +389,7 @@ fun DrawContent(
                 )
             }
             if (viewModel.drawBehavior is DrawBehavior.Background) {
-                BackgroundColorSelector(
+                ColorRowSelector(
                     value = viewModel.backgroundColor,
                     onValueChange = viewModel::updateBackgroundColor,
                     modifier = Modifier
@@ -924,7 +924,7 @@ fun DrawContent(
                                             ),
                                     )
                                 }
-                                BackgroundColorSelector(
+                                ColorRowSelector(
                                     value = sheetBackgroundColor,
                                     onValueChange = { sheetBackgroundColor = it },
                                     modifier = Modifier

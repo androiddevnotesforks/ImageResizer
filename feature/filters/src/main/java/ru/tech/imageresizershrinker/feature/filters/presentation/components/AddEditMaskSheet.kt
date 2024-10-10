@@ -116,6 +116,7 @@ import ru.tech.imageresizershrinker.core.ui.widget.other.LocalToastHostState
 import ru.tech.imageresizershrinker.core.ui.widget.other.showError
 import ru.tech.imageresizershrinker.core.ui.widget.preferences.PreferenceItemOverload
 import ru.tech.imageresizershrinker.core.ui.widget.preferences.PreferenceRowSwitch
+import ru.tech.imageresizershrinker.core.ui.widget.saver.PtSaver
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.SimpleSheet
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.SimpleSheetDefaults
 import ru.tech.imageresizershrinker.core.ui.widget.text.TitleItem
@@ -128,7 +129,6 @@ import ru.tech.imageresizershrinker.feature.draw.presentation.components.BrushSo
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.DrawColorSelector
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.DrawPathModeSelector
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.LineWidthSelector
-import ru.tech.imageresizershrinker.feature.draw.presentation.components.PtSaver
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.UiPathPaint
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.model.UiDrawPathMode
 import ru.tech.imageresizershrinker.feature.draw.presentation.components.model.toDomain
@@ -144,7 +144,7 @@ fun AddEditMaskSheet(
     onDismiss: () -> Unit,
     targetBitmapUri: Uri? = null,
     masks: List<UiFilterMask> = emptyList(),
-    onMaskPicked: (UiFilterMask) -> Unit
+    onMaskPicked: (UiFilterMask) -> Unit,
 ) {
     ScopedViewModelContainer<AddMaskSheetViewModel> { disposable ->
         val viewModel = this
@@ -449,8 +449,8 @@ fun AddEditMaskSheet(
                                         Color.Magenta
                                     )
                                 },
-                                drawColor = viewModel.maskColor,
-                                onColorChange = viewModel::updateMaskColor,
+                                value = viewModel.maskColor,
+                                onValueChange = viewModel::updateMaskColor,
                                 modifier = Modifier.padding(
                                     start = 16.dp,
                                     end = 16.dp,
@@ -615,7 +615,7 @@ private class AddMaskSheetViewModel @Inject constructor(
     private val filterMaskApplier: FilterMaskApplier<Bitmap, Path, Color>,
     private val imagePreviewCreator: ImagePreviewCreator<Bitmap>,
     private val filterProvider: FilterProvider<Bitmap>,
-    dispatchersHolder: DispatchersHolder
+    dispatchersHolder: DispatchersHolder,
 ) : BaseViewModel(dispatchersHolder) {
 
     private val _maskColor = mutableStateOf(Color.Red)
@@ -712,7 +712,7 @@ private class AddMaskSheetViewModel @Inject constructor(
     fun <T : Any> updateFilter(
         value: T,
         index: Int,
-        showError: (Throwable) -> Unit
+        showError: (Throwable) -> Unit,
     ) {
         val list = _filterList.value.toMutableList()
         runCatching {
@@ -786,7 +786,7 @@ private class AddMaskSheetViewModel @Inject constructor(
     fun setMask(
         mask: UiFilterMask?,
         bitmapUri: Uri?,
-        masks: List<UiFilterMask>
+        masks: List<UiFilterMask>,
     ) {
         mask?.let {
             _paths.update { mask.maskPaints.map { it.toUiPathPaint() } }
@@ -811,7 +811,7 @@ private class AddMaskSheetViewModel @Inject constructor(
     suspend fun filter(
         bitmap: Bitmap,
         filters: List<Filter<*>>,
-        size: IntegerSize? = null
+        size: IntegerSize? = null,
     ): Bitmap? = size?.let { intSize ->
         imageTransformer.transform(
             image = bitmap,
