@@ -15,25 +15,18 @@
  * along with this program.  If not, see <http://www.apache.org/licenses/LICENSE-2.0>.
  */
 
-package ru.tech.imageresizershrinker.core.domain.saving
+package ru.tech.imageresizershrinker.core.domain.saving.io
 
-import java.io.InputStream
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-interface Writeable {
-
-    fun copyFrom(inputStream: InputStream): Long
-
-    fun writeBytes(byteArray: ByteArray)
-
+interface IoCloseable {
     fun close()
-
 }
 
 @OptIn(ExperimentalContracts::class)
-inline fun <T : Writeable?, R> T.use(block: (T) -> R): R {
+inline fun <T : IoCloseable?, R> T.use(block: (T) -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
@@ -50,7 +43,7 @@ inline fun <T : Writeable?, R> T.use(block: (T) -> R): R {
 
 @SinceKotlin("1.1")
 @PublishedApi
-internal fun Writeable?.closeFinally(cause: Throwable?) = when {
+internal fun IoCloseable?.closeFinally(cause: Throwable?) = when {
     this == null -> {}
     cause == null -> close()
     else ->

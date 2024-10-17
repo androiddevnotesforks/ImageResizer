@@ -15,20 +15,25 @@
  * along with this program.  If not, see <http://www.apache.org/licenses/LICENSE-2.0>.
  */
 
-package ru.tech.imageresizershrinker.core.data.saving
+package ru.tech.imageresizershrinker.core.domain.remote
 
-import ru.tech.imageresizershrinker.core.domain.saving.Writeable
-import java.io.InputStream
-import java.io.OutputStream
+data class RemoteResources(
+    val name: String,
+    val list: List<RemoteResource>
+) {
 
-internal class StreamWriteable(
-    private val stream: OutputStream
-) : Writeable {
+    companion object {
+        const val CUBE_LUT = "cubelut"
 
-    override fun copyFrom(inputStream: InputStream) = inputStream.copyTo(stream)
-
-    override fun writeBytes(byteArray: ByteArray) = stream.write(byteArray)
-
-    override fun close() = stream.close()
+        val CubeLutDefault = RemoteResources(
+            name = CUBE_LUT,
+            list = emptyList()
+        )
+    }
 
 }
+
+data class RemoteResource(
+    val uri: String,
+    val name: String
+)

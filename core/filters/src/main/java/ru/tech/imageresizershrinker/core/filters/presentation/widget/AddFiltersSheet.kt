@@ -48,8 +48,10 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -119,10 +121,6 @@ import coil.transform.Transformation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.detectReorderAfterLongPress
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
 import ru.tech.imageresizershrinker.core.domain.dispatchers.DispatchersHolder
 import ru.tech.imageresizershrinker.core.domain.image.ImageCompressor
 import ru.tech.imageresizershrinker.core.domain.image.ImageGetter
@@ -132,6 +130,9 @@ import ru.tech.imageresizershrinker.core.domain.image.model.ImageFormat
 import ru.tech.imageresizershrinker.core.domain.image.model.ImageInfo
 import ru.tech.imageresizershrinker.core.domain.image.model.Quality
 import ru.tech.imageresizershrinker.core.domain.model.IntegerSize
+import ru.tech.imageresizershrinker.core.domain.remote.RemoteResources
+import ru.tech.imageresizershrinker.core.domain.remote.RemoteResourcesDownloadProgress
+import ru.tech.imageresizershrinker.core.domain.remote.RemoteResourcesStore
 import ru.tech.imageresizershrinker.core.domain.saving.FileController
 import ru.tech.imageresizershrinker.core.domain.saving.model.ImageSaveTarget
 import ru.tech.imageresizershrinker.core.domain.saving.model.SaveResult
@@ -140,6 +141,7 @@ import ru.tech.imageresizershrinker.core.filters.domain.FavoriteFiltersInteracto
 import ru.tech.imageresizershrinker.core.filters.domain.FilterProvider
 import ru.tech.imageresizershrinker.core.filters.domain.model.Filter
 import ru.tech.imageresizershrinker.core.filters.domain.model.TemplateFilter
+import ru.tech.imageresizershrinker.core.filters.presentation.model.UiCubeLutFilter
 import ru.tech.imageresizershrinker.core.filters.presentation.model.UiFilter
 import ru.tech.imageresizershrinker.core.filters.presentation.model.toUiFilter
 import ru.tech.imageresizershrinker.core.filters.presentation.utils.collectAsUiState
@@ -169,6 +171,7 @@ import ru.tech.imageresizershrinker.core.ui.widget.modifier.shimmer
 import ru.tech.imageresizershrinker.core.ui.widget.other.EnhancedTopAppBar
 import ru.tech.imageresizershrinker.core.ui.widget.other.EnhancedTopAppBarType
 import ru.tech.imageresizershrinker.core.ui.widget.other.LocalToastHostState
+import ru.tech.imageresizershrinker.core.ui.widget.other.showError
 import ru.tech.imageresizershrinker.core.ui.widget.preferences.PreferenceItemOverload
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.SimpleDragHandle
 import ru.tech.imageresizershrinker.core.ui.widget.sheets.SimpleSheet
@@ -181,6 +184,8 @@ import ru.tech.imageresizershrinker.core.ui.widget.utils.ScopedViewModelContaine
 import ru.tech.imageresizershrinker.core.ui.widget.utils.rememberAvailableHeight
 import ru.tech.imageresizershrinker.core.ui.widget.utils.rememberForeverLazyListState
 import ru.tech.imageresizershrinker.core.ui.widget.utils.rememberImageState
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -196,6 +201,7 @@ private class AddFiltersSheetViewModel @Inject constructor(
     private val imageCompressor: ImageCompressor<Bitmap>,
     private val favoriteInteractor: FavoriteFiltersInteractor,
     private val imageGetter: ImageGetter<Bitmap, ExifInterface>,
+    private val remoteResourcesStore: RemoteResourcesStore,
     dispatchersHolder: DispatchersHolder
 ) : BaseViewModel(dispatchersHolder) {
     private val _previewData: MutableState<List<UiFilter<*>>?> = mutableStateOf(null)
@@ -206,6 +212,52 @@ private class AddFiltersSheetViewModel @Inject constructor(
 
     private val _isPreviewLoading: MutableState<Boolean> = mutableStateOf(false)
     val isPreviewLoading by _isPreviewLoading
+
+    private val _cubeLutRemoteResources: MutableState<RemoteResources> =
+        mutableStateOf(RemoteResources.CubeLutDefault)
+    val cubeLutRemoteResources by _cubeLutRemoteResources
+
+    private val _cubeLutDownloadProgress: MutableState<RemoteResourcesDownloadProgress?> =
+        mutableStateOf(null)
+    val cubeLutDownloadProgress by _cubeLutDownloadProgress
+
+    init {
+        updateCubeLuts(
+            startDownloadIfNeeded = false,
+            forceUpdate = false,
+            onFailure = {},
+            downloadOnlyNewData = false
+        )
+    }
+
+    fun updateCubeLuts(
+        startDownloadIfNeeded: Boolean,
+        forceUpdate: Boolean,
+        onFailure: (Throwable) -> Unit,
+        downloadOnlyNewData: Boolean = false
+    ) {
+        viewModelScope.launch {
+            remoteResourcesStore.getResources(
+                name = RemoteResources.CUBE_LUT,
+                forceUpdate = forceUpdate,
+                onDownloadRequest = { name ->
+                    if (startDownloadIfNeeded) {
+                        remoteResourcesStore.downloadResources(
+                            name = name,
+                            onProgress = { progress ->
+                                _cubeLutDownloadProgress.update { progress }
+                            },
+                            onFailure = onFailure,
+                            downloadOnlyNewData = downloadOnlyNewData
+                        )
+                    } else null
+                }
+            )?.let { data ->
+                _cubeLutRemoteResources.update { data }
+            }
+            _cubeLutDownloadProgress.update { null }
+        }
+    }
 
     fun setPreviewData(data: UiFilter<*>?) {
         _previewData.update { data?.let { listOf(it) } }
@@ -533,7 +585,7 @@ fun AddFiltersSheet(
         var isSearching by rememberSaveable {
             mutableStateOf(false)
         }
-        var searchKeyword by rememberSaveable {
+        var searchKeyword by rememberSaveable(isSearching) {
             mutableStateOf("")
         }
         var filtersForSearch by remember {
@@ -743,7 +795,7 @@ fun AddFiltersSheet(
                                                     start = 24.dp,
                                                     end = 24.dp,
                                                     top = 8.dp,
-                                                    bottom = 8.dp
+                                                    bottom = 16.dp
                                                 )
                                             )
                                             Icon(
@@ -893,14 +945,13 @@ fun AddFiltersSheet(
                                         val data = remember {
                                             mutableStateOf(favoriteFilters)
                                         }
+                                        val listState = rememberLazyListState()
                                         val state = rememberReorderableLazyListState(
+                                            lazyListState = listState,
                                             onMove = { from, to ->
                                                 data.value = data.value.toMutableList().apply {
                                                     add(to.index, removeAt(from.index))
                                                 }
-                                            },
-                                            onDragEnd = { _, _ ->
-                                                viewModel.reorderFavoriteFilters(data.value)
                                             }
                                         )
                                         LaunchedEffect(favoriteFilters) {
@@ -909,11 +960,8 @@ fun AddFiltersSheet(
                                             }
                                         }
                                         LazyColumn(
-                                            state = state.listState,
-                                            modifier = Modifier
-                                                .fillMaxHeight()
-                                                .reorderable(state)
-                                                .detectReorderAfterLongPress(state),
+                                            state = listState,
+                                            modifier = Modifier.fillMaxHeight(),
                                             verticalArrangement = Arrangement.spacedBy(
                                                 space = 4.dp,
                                                 alignment = Alignment.CenterVertically
@@ -925,12 +973,7 @@ fun AddFiltersSheet(
                                                 key = { _, f -> f.hashCode() }
                                             ) { index, filter ->
                                                 ReorderableItem(
-                                                    modifier = Modifier.then(
-                                                        if (state.draggingItemKey == null) {
-                                                            Modifier.animateItem()
-                                                        } else Modifier
-                                                    ),
-                                                    reorderableState = state,
+                                                    state = state,
                                                     key = filter.hashCode()
                                                 ) { isDragging ->
                                                     FilterSelectionItem(
@@ -942,9 +985,13 @@ fun AddFiltersSheet(
                                                         onOpenPreview = {
                                                             viewModel.setPreviewData(filter)
                                                         },
-                                                        onClick = {
+                                                        onClick = { custom ->
                                                             onVisibleChange(false)
-                                                            onFilterPicked(filter)
+                                                            if (custom != null) {
+                                                                onFilterPickedWithParams(custom)
+                                                            } else {
+                                                                onFilterPicked(filter)
+                                                            }
                                                         },
                                                         onRequestFilterMapping = onRequestFilterMapping,
                                                         shape = ContainerShapeDefaults.shapeForIndex(
@@ -955,12 +1002,38 @@ fun AddFiltersSheet(
                                                             viewModel.toggleFavorite(filter)
                                                         },
                                                         modifier = Modifier
+                                                            .longPressDraggableHandle {
+                                                                viewModel.reorderFavoriteFilters(
+                                                                    data.value
+                                                                )
+                                                            }
                                                             .scale(
                                                                 animateFloatAsState(
                                                                     if (isDragging) 1.05f
                                                                     else 1f
                                                                 ).value
+                                                            ),
+                                                        cubeLutRemoteResources = if (filter is UiCubeLutFilter) {
+                                                            viewModel.cubeLutRemoteResources
+                                                        } else null,
+                                                        cubeLutDownloadProgress = if (filter is UiCubeLutFilter) {
+                                                            viewModel.cubeLutDownloadProgress
+                                                        } else null,
+                                                        onCubeLutDownloadRequest = { forceUpdate, downloadOnlyNewData ->
+                                                            viewModel.updateCubeLuts(
+                                                                startDownloadIfNeeded = true,
+                                                                forceUpdate = forceUpdate,
+                                                                onFailure = {
+                                                                    scope.launch {
+                                                                        toastHostState.showError(
+                                                                            context,
+                                                                            it
+                                                                        )
+                                                                    }
+                                                                },
+                                                                downloadOnlyNewData = downloadOnlyNewData
                                                             )
+                                                        }
                                                     )
                                                 }
                                             }
@@ -1069,9 +1142,13 @@ fun AddFiltersSheet(
                                             onOpenPreview = {
                                                 viewModel.setPreviewData(filter)
                                             },
-                                            onClick = {
+                                            onClick = { custom ->
                                                 onVisibleChange(false)
-                                                onFilterPicked(filter)
+                                                if (custom != null) {
+                                                    onFilterPickedWithParams(custom)
+                                                } else {
+                                                    onFilterPicked(filter)
+                                                }
                                             },
                                             onRequestFilterMapping = onRequestFilterMapping,
                                             shape = ContainerShapeDefaults.shapeForIndex(
@@ -1082,7 +1159,25 @@ fun AddFiltersSheet(
                                                 viewModel.toggleFavorite(filter)
                                             },
                                             isFavoritePage = false,
-                                            modifier = Modifier.animateItem()
+                                            modifier = Modifier.animateItem(),
+                                            cubeLutRemoteResources = if (filter is UiCubeLutFilter) {
+                                                viewModel.cubeLutRemoteResources
+                                            } else null,
+                                            cubeLutDownloadProgress = if (filter is UiCubeLutFilter) {
+                                                viewModel.cubeLutDownloadProgress
+                                            } else null,
+                                            onCubeLutDownloadRequest = { forceUpdate, downloadOnlyNewData ->
+                                                viewModel.updateCubeLuts(
+                                                    startDownloadIfNeeded = true,
+                                                    forceUpdate = forceUpdate,
+                                                    onFailure = {
+                                                        scope.launch {
+                                                            toastHostState.showError(context, it)
+                                                        }
+                                                    },
+                                                    downloadOnlyNewData = downloadOnlyNewData
+                                                )
+                                            }
                                         )
                                     }
                                 }
@@ -1130,9 +1225,6 @@ fun AddFiltersSheet(
                                 },
                                 startIcon = {
                                     EnhancedIconButton(
-                                        containerColor = Color.Transparent,
-                                        contentColor = LocalContentColor.current,
-                                        enableAutoShadowAndBorder = false,
                                         onClick = {
                                             searchKeyword = ""
                                             isSearching = false
@@ -1196,6 +1288,7 @@ fun AddFiltersSheet(
                             ) {
                                 AutoSizeText(stringResource(R.string.close))
                             }
+                            Spacer(Modifier.width(8.dp))
                         }
                     }
                 }

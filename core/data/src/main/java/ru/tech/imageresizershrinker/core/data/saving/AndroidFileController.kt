@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import okio.use
+import ru.tech.imageresizershrinker.core.data.saving.io.StreamWriteable
 import ru.tech.imageresizershrinker.core.data.utils.cacheSize
 import ru.tech.imageresizershrinker.core.data.utils.clearCache
 import ru.tech.imageresizershrinker.core.data.utils.copyMetadata
@@ -46,11 +47,11 @@ import ru.tech.imageresizershrinker.core.domain.image.ShareProvider
 import ru.tech.imageresizershrinker.core.domain.json.JsonParser
 import ru.tech.imageresizershrinker.core.domain.saving.FileController
 import ru.tech.imageresizershrinker.core.domain.saving.FilenameCreator
-import ru.tech.imageresizershrinker.core.domain.saving.Writeable
+import ru.tech.imageresizershrinker.core.domain.saving.io.Writeable
+import ru.tech.imageresizershrinker.core.domain.saving.io.use
 import ru.tech.imageresizershrinker.core.domain.saving.model.ImageSaveTarget
 import ru.tech.imageresizershrinker.core.domain.saving.model.SaveResult
 import ru.tech.imageresizershrinker.core.domain.saving.model.SaveTarget
-import ru.tech.imageresizershrinker.core.domain.saving.use
 import ru.tech.imageresizershrinker.core.resources.R
 import ru.tech.imageresizershrinker.core.settings.domain.SettingsManager
 import ru.tech.imageresizershrinker.core.settings.domain.model.CopyToClipboardMode
@@ -97,6 +98,10 @@ internal class AndroidFileController @Inject constructor(
             return@withContext SaveResult.Error.MissingPermissions
         }
 
+        val data = if (saveTarget is ImageSaveTarget<*> && saveTarget.readFromUriInsteadOfData) {
+            readBytes(saveTarget.originalUri)
+        } else saveTarget.data
+
         val savingPath = oneTimeSaveLocationUri?.getPath(context) ?: defaultSavingPath
 
         runCatching {
@@ -104,7 +109,7 @@ internal class AndroidFileController @Inject constructor(
                 val clipboardManager = context.getSystemService<ClipboardManager>()
 
                 shareProvider.cacheByteArray(
-                    byteArray = saveTarget.data,
+                    byteArray = data,
                     filename = filenameCreator.constructRandomFilename(saveTarget.extension)
                 )?.toUri()?.let { uri ->
                     clipboardManager?.setPrimaryClip(
@@ -142,7 +147,7 @@ internal class AndroidFileController @Inject constructor(
                     )
                 }.getOrNull()?.use { parcel ->
                     FileOutputStream(parcel.fileDescriptor).use { out ->
-                        out.write(saveTarget.data)
+                        out.write(data)
                         context.copyMetadata(
                             initialExif = (saveTarget as? ImageSaveTarget<*>)?.metadata as ExifInterface?,
                             fileUri = originalUri,
@@ -217,7 +222,7 @@ internal class AndroidFileController @Inject constructor(
                 )
 
                 savingFolder.outputStream?.use {
-                    it.write(saveTarget.data)
+                    it.write(data)
                 }
 
                 context.copyMetadata(
@@ -358,6 +363,20 @@ internal class AndroidFileController @Inject constructor(
 
             jsonParser.fromJson<O>(file.readText(Charsets.UTF_8), kClass.java)
         }.getOrNull()
+    }
+
+    override suspend fun <M> writeMetadata(
+        imageUri: String,
+        metadata: M?
+    ) {
+        if (metadata is ExifInterface?) {
+            context.copyMetadata(
+                initialExif = metadata,
+                fileUri = imageUri.toUri(),
+                keepMetadata = false,
+                originalUri = imageUri.toUri()
+            )
+        }
     }
 
 }

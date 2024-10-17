@@ -15,12 +15,11 @@
  * along with this program.  If not, see <http://www.apache.org/licenses/LICENSE-2.0>.
  */
 
-package ru.tech.imageresizershrinker.core.data.saving
+package ru.tech.imageresizershrinker.core.domain.remote
 
-import ru.tech.imageresizershrinker.core.domain.saving.Writeable
-import java.io.File
-import java.io.FileOutputStream
-
-internal class FileWriteable(
-    private val file: File
-) : Writeable by StreamWriteable(FileOutputStream(file))
+data class RemoteResourcesDownloadProgress(
+    val currentPercent: Float,
+    val currentTotalSize: Long,
+    val itemsCount: Int,
+    val itemsDownloaded: Int
+)

@@ -35,7 +35,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,7 +62,10 @@ fun ExpandableItem(
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     shape: Shape = RoundedCornerShape(20.dp),
     color: Color = Color.Unspecified,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    canExpand: Boolean = true,
+    onClick: () -> Unit = {},
+    expansionIconContainerColor: Color = Color.Transparent
 ) {
     val haptics = LocalHapticFeedback.current
     Column(
@@ -88,7 +90,10 @@ fun ExpandableItem(
                     haptics.performHapticFeedback(
                         HapticFeedbackType.LongPress
                     )
-                    expanded = !expanded
+                    if (canExpand) {
+                        expanded = !expanded
+                    }
+                    onClick()
                 }
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -96,17 +101,17 @@ fun ExpandableItem(
             Row(Modifier.weight(1f)) {
                 visibleContent(expanded)
             }
-            EnhancedIconButton(
-                containerColor = Color.Transparent,
-                contentColor = LocalContentColor.current,
-                enableAutoShadowAndBorder = false,
-                onClick = { expanded = !expanded }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowDown,
-                    contentDescription = "Expand",
-                    modifier = Modifier.rotate(rotation)
-                )
+            if (canExpand) {
+                EnhancedIconButton(
+                    containerColor = expansionIconContainerColor,
+                    onClick = { expanded = !expanded }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = "Expand",
+                        modifier = Modifier.rotate(rotation)
+                    )
+                }
             }
         }
         AnimatedVisibility(expanded) {
