@@ -3,12 +3,12 @@ androidMinSdk = "21"
 androidTargetSdk = "36"
 androidCompileSdk = "36"
 
-versionName = "3.3.3-alpha01"
-versionCode = "181"
+versionName = "3.4.0-alpha01"
+versionCode = "182"
 
 jvmTarget = "17"
 
-imageToolboxLibs = "3.9.2"
+imageToolboxLibs = "3.9.4"
 trickle = "1.3.0"
 evaluator = "1.0.0"
 quickie = "1.14.0"
