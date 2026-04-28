@@ -87,3 +87,12 @@
 -keep class com.t8rin.imagetoolbox.feature.markup_layers.data.project.** { *; }
 -keep class  com.t8rin.imagetoolbox.feature.markup_layers.data.project.**
 -keep class  com.t8rin.imagetoolbox.feature.markup_layers.data.project.*
+
+-dontwarn javax.naming.NamingEnumeration
+-dontwarn javax.naming.NamingException
+-dontwarn javax.naming.directory.Attribute
+-dontwarn javax.naming.directory.Attributes
+-dontwarn javax.naming.directory.DirContext
+-dontwarn javax.naming.directory.InitialDirContext
+-dontwarn javax.naming.directory.SearchControls
+-dontwarn javax.naming.directory.SearchResult
