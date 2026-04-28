@@ -29,4 +29,5 @@ dependencies {
     implementation(projects.feature.pdfTools)
     implementation(projects.feature.singleEdit)
     implementation(libs.tesseract)
+    implementation(projects.lib.cropper)
 }

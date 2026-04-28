@@ -32,4 +32,5 @@ dependencies {
     implementation(projects.feature.pickColor)
     implementation(projects.feature.compare)
     implementation(projects.lib.curves)
+    implementation(projects.lib.cropper)
 }

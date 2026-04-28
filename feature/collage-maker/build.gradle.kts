@@ -26,4 +26,5 @@ android.namespace = "com.t8rin.imagetoolbox.feature.collage_maker"
 
 dependencies {
     implementation(projects.lib.collages)
+    implementation(projects.lib.cropper)
 }

@@ -26,4 +26,6 @@ android.namespace = "com.t8rin.imagetoolbox.feature.crop"
 
 dependencies {
     implementation(projects.lib.opencvTools)
+    implementation(projects.lib.cropper)
+    implementation(libs.toolbox.advancedCrop)
 }

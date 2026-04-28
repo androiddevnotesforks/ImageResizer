@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toFile
 import com.t8rin.colors.util.roundToTwoDigits
+import com.t8rin.crop.advanced.compose.AdvancedCropper
 import com.t8rin.cropper.ImageCropper
 import com.t8rin.cropper.model.AspectRatio
 import com.t8rin.cropper.settings.CropDefaults
@@ -66,7 +67,6 @@ import com.t8rin.imagetoolbox.core.ui.widget.modifier.ShapeDefaults
 import com.t8rin.imagetoolbox.core.ui.widget.modifier.transparencyChecker
 import com.t8rin.imagetoolbox.core.ui.widget.other.BoxAnimatedVisibility
 import com.t8rin.opencv_tools.free_corners_crop.compose.FreeCornersCropper
-import com.yalantis.ucrop.compose.UCropper
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -93,14 +93,13 @@ fun Cropper(
         when (type) {
             CropType.Default -> {
                 val scope = rememberCoroutineScope()
-                UCropper(
+                AdvancedCropper(
                     imageModel = bitmap,
                     aspectRatio = if (cropProperties.aspectRatio != AspectRatio.Original) {
                         cropProperties.aspectRatio.value
                     } else null,
                     modifier = Modifier.transparencyChecker(),
                     containerModifier = Modifier.fillMaxSize(),
-                    hapticsStrength = LocalSettingsState.current.hapticsStrength,
                     croppingTrigger = crop,
                     onCropped = {
                         scope.launch {
