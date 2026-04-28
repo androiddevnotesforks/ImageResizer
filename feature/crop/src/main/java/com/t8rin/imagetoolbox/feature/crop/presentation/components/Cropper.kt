@@ -120,8 +120,12 @@ fun Cropper(
                     isOverlayDraggable = true,
                     rotationAngleState = rotationState,
                     onLoadingStateChange = {
-                        if (it) onImageCropStarted()
-                        else onImageCropFinished(null)
+                        if (it) {
+                            onImageCropStarted()
+                        } else {
+                            rotationState.floatValue = 0f
+                            onImageCropFinished(null)
+                        }
                     },
                     contentPadding = WindowInsets.systemBars.union(WindowInsets.displayCutout).let {
                         if (addVerticalInsets) it.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
