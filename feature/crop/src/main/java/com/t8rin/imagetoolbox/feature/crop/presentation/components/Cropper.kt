@@ -111,10 +111,12 @@ fun Cropper(
                                 .apply(onImageCropFinished)
                         }
                     },
-                    sliderConfig = HorizontalWheelSliderConfig(
-                        mirrorIcon = Icons.Outlined.Flip,
-                        rotate90Icon = Icons.Outlined.Rotate90Ccw
-                    ),
+                    sliderConfig = remember {
+                        HorizontalWheelSliderConfig(
+                            mirrorIcon = Icons.Outlined.Flip,
+                            rotate90Icon = Icons.Outlined.Rotate90Ccw
+                        )
+                    },
                     isOverlayDraggable = true,
                     rotationAngleState = rotationState,
                     onLoadingStateChange = {
