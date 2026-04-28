@@ -57,11 +57,15 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toFile
 import com.t8rin.colors.util.roundToTwoDigits
 import com.t8rin.crop.advanced.compose.AdvancedCropper
+import com.t8rin.crop.advanced.compose.HorizontalWheelSliderConfig
 import com.t8rin.cropper.ImageCropper
 import com.t8rin.cropper.model.AspectRatio
 import com.t8rin.cropper.settings.CropDefaults
 import com.t8rin.cropper.settings.CropProperties
+import com.t8rin.imagetoolbox.core.resources.Icons
 import com.t8rin.imagetoolbox.core.resources.R
+import com.t8rin.imagetoolbox.core.resources.icons.Flip
+import com.t8rin.imagetoolbox.core.resources.icons.Rotate90Ccw
 import com.t8rin.imagetoolbox.core.settings.presentation.provider.LocalSettingsState
 import com.t8rin.imagetoolbox.core.ui.widget.modifier.ShapeDefaults
 import com.t8rin.imagetoolbox.core.ui.widget.modifier.transparencyChecker
@@ -107,6 +111,10 @@ fun Cropper(
                                 .apply(onImageCropFinished)
                         }
                     },
+                    sliderConfig = HorizontalWheelSliderConfig(
+                        mirrorIcon = Icons.Outlined.Flip,
+                        rotate90Icon = Icons.Outlined.Rotate90Ccw
+                    ),
                     isOverlayDraggable = true,
                     rotationAngleState = rotationState,
                     onLoadingStateChange = {

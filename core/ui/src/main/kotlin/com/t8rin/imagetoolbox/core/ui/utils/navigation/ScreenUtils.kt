@@ -17,9 +17,9 @@
 
 package com.t8rin.imagetoolbox.core.ui.utils.navigation
 
-import com.t8rin.imagetoolbox.core.resources.Icons
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.core.net.toUri
+import com.t8rin.imagetoolbox.core.resources.Icons
 import com.t8rin.imagetoolbox.core.resources.R
 import com.t8rin.imagetoolbox.core.resources.icons.Album
 import com.t8rin.imagetoolbox.core.resources.icons.ApngBox
@@ -355,7 +355,7 @@ internal fun Screen.twoToneIcon(): ImageVector? = when (this) {
     is WallpapersExport -> Icons.Outlined.WallpaperAlt
     is AsciiArt -> Icons.Outlined.Ascii
     is AiTools -> Icons.TwoTone.Neurology
-    is ColorLibrary -> Icons.TwoTone.FormatPaintVariant
+    is ColorLibrary -> Icons.Outlined.FormatPaintVariant
     is PdfTools.Merge -> Icons.TwoTone.ImageCombine
     is PdfTools.Split -> Icons.TwoTone.SplitAlt
     is PdfTools.Rotate -> Icons.TwoTone.Rotate90Cw
